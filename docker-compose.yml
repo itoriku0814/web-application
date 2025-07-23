@@ -1,0 +1,44 @@
+# Docker Composeのバージョンを指定
+version: '3.8'
+
+# 起動するサービス（コンテナ）を定義
+services:
+  # バックエンド (json-server) の設定
+  backend:
+    # ベースとなるDockerイメージ
+    image: node:18-alpine
+    # コンテナ内で実行するコマンド
+    # npx: パッケージを一時的にインストールして実行するコマンド
+    # json-server: サーバーを起動
+    # --watch: db.jsonの変更を監視し、自動で反映
+    # --host 0.0.0.0: コンテナ外からのアクセスを許可
+    command: npx json-server --watch /data/db.json --host 0.0.0.0
+    # ホストマシンとコンテナのポートを接続 (ホスト:コンテナ)
+    ports:
+      - "3000:3000"
+    # ホストマシンのディレクトリをコンテナ内にマウント
+    # これで、ローカルのdataディレクトリの変更がコンテナに反映される
+    volumes:
+      - ./data:/data
+    # コンテナのワーキングディレクトリ
+    working_dir: /data
+
+  # フロントエンド (Vue.jsアプリ) の設定
+  frontend:
+    # ベースとなるDockerイメージ
+    image: node:18-alpine
+    # コンテナ内で実行するコマンド
+    # http-server: 静的なHTML/CSS/JSファイルを配信するシンプルなWebサーバー
+    # -p 8080: 8080番ポートで起動
+    command: npx http-server /app -p 8080
+    # ホストマシンとコンテナのポートを接続
+    ports:
+      - "8080:8080"
+    # ホストマシンのappディレクトリをコンテナ内にマウント
+    volumes:
+      - ./app:/app
+    # コンテナのワーキングディレクトリ
+    working_dir: /app
+    # backendサービスが起動してからfrontendサービスを起動する
+    depends_on:
+      - backend

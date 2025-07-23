@@ -1,0 +1,20 @@
+/* メモがリストに追加/削除されるときのアニメーション */
+.memo-list-enter-active,
+.memo-list-leave-active {
+  transition: all 0.5s ease;
+}
+.memo-list-enter-from,
+.memo-list-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* メモアイテムのホバーエフェクト */
+.memo-item {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.memo-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}

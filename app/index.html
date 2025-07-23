@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memo & Photo App</title>
+    <!-- Tailwind CSSをCDN経由で読み込み、手軽にデザインを整える -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- カスタムCSSファイルの読み込み -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Vueアプリケーションのマウントポイント -->
+    <div id="app" class="container mx-auto p-4 md:p-8">
+
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 text-center">Memo & Photo App</h1>
+            <p class="text-center text-gray-500 mt-2">Vue.jsとjson-serverで作るSPA</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左側: 入力フォーム -->
+            <aside class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-lg shadow-md sticky top-8">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-700">新しいメモを追加</h2>
+                    <!-- v-on:submit.prevent でフォーム送信時のリロードを防ぐ -->
+                    <form @submit.prevent="addMemo">
+                        <div class="mb-4">
+                            <label for="title" class="block text-gray-600 mb-2">タイトル</label>
+                            <!-- v-modelでVueのデータと入力値を双方向にバインディング -->
+                            <input type="text" v-model="newMemo.title" id="title" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="content" class="block text-gray-600 mb-2">内容</label>
+                            <textarea v-model="newMemo.content" id="content" rows="4" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label for="category" class="block text-gray-600 mb-2">カテゴリ</label>
+                            <input type="text" v-model="newMemo.category" id="category" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="image" class="block text-gray-600 mb-2">写真</label>
+                            <!-- @changeでファイル選択時のイベントをハンドル -->
+                            <input type="file" @change="handleImageUpload" id="image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-300 font-semibold">
+                            登録する
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- 右側: メモ一覧と検索 -->
+            <section class="lg:col-span-2">
+                <!-- 検索・フィルタリングUI -->
+                <div class="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row gap-4 items-center">
+                    <div class="w-full md:flex-grow">
+                        <input type="text" v-model="searchQuery" placeholder="タイトルや内容で検索..." class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="w-full md:w-auto">
+                        <select v-model="selectedCategory" class="w-full p-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">すべてのカテゴリ</option>
+                            <!-- v-forでカテゴリリストをループして選択肢を生成 -->
+                            <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- メモ一覧 -->
+                <!-- transition-groupでリストの追加・削除時にアニメーションを適用 -->
+                <transition-group name="memo-list" tag="div" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- v-forでフィルタリングされたメモのリストをループ表示 -->
+                    <div v-for="memo in filteredMemos" :key="memo.id" class="bg-white rounded-lg shadow-md overflow-hidden memo-item">
+                        <img :src="memo.image" :alt="memo.title" class="w-full h-48 object-cover" @error="imageError">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-gray-800">{{ memo.title }}</h3>
+                                <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ memo.category }}</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">{{ memo.content }}</p>
+                            <p class="text-xs text-gray-400 text-right">{{ new Date(memo.createdAt).toLocaleString('ja-JP') }}</p>
+                        </div>
+                    </div>
+                </transition-group>
+
+                <!-- メモがない場合の表示 -->
+                <div v-if="filteredMemos.length === 0" class="text-center py-12">
+                    <p class="text-gray-500">表示できるメモがありません。</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Vue.js本体をCDN経由で読み込み -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- アプリケーションのロジックを記述したJSファイルを読み込み -->
+    <script src="js/main.js"></script>
+</body>
+</html>

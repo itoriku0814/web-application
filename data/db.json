@@ -1,0 +1,28 @@
+{
+  "memos": [
+    {
+      "id": 1,
+      "title": "初めてのメモ",
+      "content": "これはVue.jsとjson-serverのテストです。",
+      "image": "https://placehold.co/600x400/3498db/ffffff?text=Sample+Image+1",
+      "category": "技術",
+      "createdAt": "2024-07-23T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "旅行の計画",
+      "content": "次の週末は箱根に行きたい。温泉と美術館を巡る。",
+      "image": "https://placehold.co/600x400/2ecc71/ffffff?text=Sample+Image+2",
+      "category": "プライベート",
+      "createdAt": "2024-07-24T11:30:00Z"
+    },
+    {
+      "id": 3,
+      "title": "読書記録",
+      "content": "「オブジェクト指向でなぜつくるのか」を読了。実践が大事。",
+      "image": "https://placehold.co/600x400/e74c3c/ffffff?text=Sample+Image+3",
+      "category": "学習",
+      "createdAt": "2024-07-25T15:00:00Z"
+    }
+  ]
+}
