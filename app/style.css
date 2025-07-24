@@ -1,20 +1,800 @@
-/* メモがリストに追加/削除されるときのアニメーション */
-.memo-list-enter-active,
-.memo-list-leave-active {
-  transition: all 0.5s ease;
-}
-.memo-list-enter-from,
-.memo-list-leave-to {
-  opacity: 0;
-  transform: translateY(30px);
+/* リセットCSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* メモアイテムのホバーエフェクト */
-.memo-item {
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
 }
 
-.memo-item:hover {
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ヘッダー */
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: #4f46e5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo i {
+    font-size: 28px;
+}
+
+.nav {
+    display: flex;
+    gap: 5px;
+}
+
+.nav-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-btn:hover {
+    background: rgba(79, 70, 229, 0.1);
+    color: #4f46e5;
+    transform: translateY(-1px);
+}
+
+.nav-btn.active {
+    background: #4f46e5;
+    color: white;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+/* メインコンテンツ */
+.main {
+    padding: 30px 0;
+    min-height: calc(100vh - 80px);
+}
+
+/* 検索セクション */
+.search-section {
+    margin-bottom: 30px;
+}
+
+.search-bar {
+    background: white;
+    border-radius: 15px;
+    padding: 15px 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-icon {
+    color: #9ca3af;
+    font-size: 18px;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: #374151;
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
+}
+
+.category-filter {
+    border: none;
+    outline: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    color: #374151;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* メモグリッド */
+.memo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.memo-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.memo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+}
+
+.memo-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.memo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 10px;
+}
+
+.memo-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+}
+
+.category-badge {
+    padding: 4px 12px;
+    border-radius: 15px;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.memo-content {
+    margin-bottom: 15px;
+}
+
+.memo-text {
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.memo-image {
+    margin-top: 10px;
+}
+
+.thumbnail {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.memo-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+}
+
+.tag {
+    background: #e5e7eb;
+    color: #374151;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.memo-date {
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.memo-card:hover .delete-btn {
+    opacity: 1;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* 空の状態 */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #b09902;
+    grid-column: 1 / -1;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+/* フォーム */
+.add-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.form-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+    outline: none;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-file {
+    width: 100%;
+    padding: 10px;
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.form-file:hover {
+    border-color: #4f46e5;
+}
+
+.image-preview {
+    margin-top: 15px;
+    position: relative;
+    display: inline-block;
+}
+
+.preview-image {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.submit-btn,
+.reset-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.submit-btn {
+    background: #4f46e5;
+    color: white;
+}
+
+.submit-btn:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+.reset-btn {
+    background: #6b7280;
+    color: white;
+}
+
+.reset-btn:hover {
+    background: #4b5563;
+}
+
+/* カテゴリビュー */
+.categories-view {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    justify-content: center;
+}
+
+.category-section {
+    background: white;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.category-title {
+    padding: 20px 25px;
+    background: #f8fafc;
+    border-left: 5px solid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.memo-count {
+    background: #e5e7eb;
+    color: #6b7280;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.category-memos {
+    padding: 15px;
+}
+
+.category-memo-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    gap: 15px;
+}
+
+.category-memo-card:hover {
+    background: #f3f4f6;
+}
+
+.category-memo-card:last-child {
+    margin-bottom: 0;
+}
+
+.memo-info {
+    flex: 1;
+}
+
+.memo-info .memo-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.memo-preview {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 5px;
+}
+
+.memo-thumbnail {
+    flex-shrink: 0;
+}
+
+.thumb-img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.empty-category {
+    text-align: center;
+    padding: 30px;
+    color: #9ca3af;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.empty-category i {
+    font-size: 24px;
+    opacity: 0.5;
+}
+
+/* モーダル */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 25px 30px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.modal-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 1;
+}
+
+.modal-close {
+    background: #f3f4f6;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.modal-body {
+    padding: 20px 30px 30px;
+}
+
+.memo-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.memo-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.memo-full-content {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #4f46e5;
+}
+
+.memo-full-content p {
+    line-height: 1.7;
+    color: #374151;
+    white-space: pre-wrap;
+}
+
+.memo-full-image {
+    text-align: center;
+}
+
+.full-image {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.memo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag-detail {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 通知 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 10px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+    min-width: 250px;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.notification.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.notification.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.notification.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .header .container {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .nav {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .nav-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 12px 15px;
+    }
+    
+    .memo-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .search-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .category-filter {
+        width: 100%;
+    }
+    
+    .form-card {
+        padding: 20px;
+        margin: 0 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .submit-btn,
+    .reset-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .category-memo-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .modal-content {
+        margin: 10px;
+        max-height: 95vh;
+    }
+    
+    .modal-header,
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .notification {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .memo-card {
+        padding: 15px;
+    }
+    
+    .memo-title {
+        font-size: 16px;
+    }
+    
+    .form-title {
+        font-size: 20px;
+    }
+    
+    .section-title {
+        font-size: 24px;
+    }
 }

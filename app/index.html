@@ -3,98 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memo & Photo App</title>
-    <!-- Tailwind CSSをCDN経由で読み込み、手軽にデザインを整える -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- カスタムCSSファイルの読み込み -->
-    <link rel="stylesheet" href="css/style.css">
+    <title>SnapNoteアプリ</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 font-sans">
-
-    <!-- Vueアプリケーションのマウントポイント -->
-    <div id="app" class="container mx-auto p-4 md:p-8">
-
-        <header class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 text-center">Memo & Photo App</h1>
-            <p class="text-center text-gray-500 mt-2">Vue.jsとjson-serverで作るSPA</p>
+<body>
+    <div id="app">
+        <!-- ヘッダー -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">
+                    <i class="fas fa-sticky-note"></i>
+                    SnapNote
+                </h1>
+                <nav class="nav">
+                    <button 
+                        @click="currentView = 'list'" 
+                        :class="['nav-btn', { active: currentView === 'list' }]"
+                    >
+                        <i class="fas fa-list"></i>
+                        一覧
+                    </button>
+                    <button 
+                        @click="currentView = 'add'" 
+                        :class="['nav-btn', { active: currentView === 'add' }]"
+                    >
+                        <i class="fas fa-plus"></i>
+                        追加
+                    </button>
+                    <button 
+                        @click="currentView = 'categories'" 
+                        :class="['nav-btn', { active: currentView === 'categories' }]"
+                    >
+                        <i class="fas fa-tags"></i>
+                        カテゴリ
+                    </button>
+                </nav>
+            </div>
         </header>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- 左側: 入力フォーム -->
-            <aside class="lg:col-span-1">
-                <div class="bg-white p-6 rounded-lg shadow-md sticky top-8">
-                    <h2 class="text-2xl font-semibold mb-4 text-gray-700">新しいメモを追加</h2>
-                    <!-- v-on:submit.prevent でフォーム送信時のリロードを防ぐ -->
-                    <form @submit.prevent="addMemo">
-                        <div class="mb-4">
-                            <label for="title" class="block text-gray-600 mb-2">タイトル</label>
-                            <!-- v-modelでVueのデータと入力値を双方向にバインディング -->
-                            <input type="text" v-model="newMemo.title" id="title" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="content" class="block text-gray-600 mb-2">内容</label>
-                            <textarea v-model="newMemo.content" id="content" rows="4" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
-                        </div>
-                        <div class="mb-4">
-                            <label for="category" class="block text-gray-600 mb-2">カテゴリ</label>
-                            <input type="text" v-model="newMemo.category" id="category" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                        </div>
-                        <div class="mb-6">
-                            <label for="image" class="block text-gray-600 mb-2">写真</label>
-                            <!-- @changeでファイル選択時のイベントをハンドル -->
-                            <input type="file" @change="handleImageUpload" id="image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        </div>
-                        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-300 font-semibold">
-                            登録する
-                        </button>
-                    </form>
-                </div>
-            </aside>
-
-            <!-- 右側: メモ一覧と検索 -->
-            <section class="lg:col-span-2">
-                <!-- 検索・フィルタリングUI -->
-                <div class="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col md:flex-row gap-4 items-center">
-                    <div class="w-full md:flex-grow">
-                        <input type="text" v-model="searchQuery" placeholder="タイトルや内容で検索..." class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    </div>
-                    <div class="w-full md:w-auto">
-                        <select v-model="selectedCategory" class="w-full p-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">すべてのカテゴリ</option>
-                            <!-- v-forでカテゴリリストをループして選択肢を生成 -->
-                            <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
+        <!-- メインコンテンツ -->
+        <main class="main">
+            <div class="container">
+                <!-- 検索バー -->
+                <div class="search-section" v-if="currentView === 'list'">
+                    <div class="search-bar">
+                        <i class="fas fa-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            v-model="searchQuery" 
+                            placeholder="メモを検索..."
+                            class="search-input"
+                            @input="searchMemos"
+                        >
+                        <select v-model="selectedCategory" @change="searchMemos" class="category-filter">
+                            <option value="">全てのカテゴリ</option>
+                            <option 
+                                v-for="category in categories" 
+                                :key="category.id" 
+                                :value="category.id"
+                            >
+                                {{ category.name }}
+                            </option>
                         </select>
                     </div>
                 </div>
-                
-                <!-- メモ一覧 -->
-                <!-- transition-groupでリストの追加・削除時にアニメーションを適用 -->
-                <transition-group name="memo-list" tag="div" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- v-forでフィルタリングされたメモのリストをループ表示 -->
-                    <div v-for="memo in filteredMemos" :key="memo.id" class="bg-white rounded-lg shadow-md overflow-hidden memo-item">
-                        <img :src="memo.image" :alt="memo.title" class="w-full h-48 object-cover" @error="imageError">
-                        <div class="p-5">
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="text-xl font-bold text-gray-800">{{ memo.title }}</h3>
-                                <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{{ memo.category }}</span>
+
+                <!-- メモ一覧ビュー -->
+                <div v-if="currentView === 'list'" class="memo-grid">
+                    <div 
+                        v-for="memo in filteredMemos" 
+                        :key="memo.id" 
+                        class="memo-card"
+                        @click="selectedMemo = memo"
+                    >
+                        <div class="memo-header">
+                            <h3 class="memo-title">{{ memo.title }}</h3>
+                            <span 
+                                class="category-badge" 
+                                :style="{ backgroundColor: getCategoryColor(memo.category) }"
+                            >
+                                {{ getCategoryName(memo.category) }}
+                            </span>
+                        </div>
+                        <div class="memo-content">
+                            <p class="memo-text">{{ memo.content.substring(0, 100) }}{{ memo.content.length > 100 ? '...' : '' }}</p>
+                            <div v-if="memo.image" class="memo-image">
+                                <img :src="memo.image" alt="メモ画像" class="thumbnail">
                             </div>
-                            <p class="text-gray-600 mb-4">{{ memo.content }}</p>
-                            <p class="text-xs text-gray-400 text-right">{{ new Date(memo.createdAt).toLocaleString('ja-JP') }}</p>
+                        </div>
+                        <div class="memo-footer">
+                            <div class="tags">
+                                <span 
+                                    v-for="tag in memo.tags" 
+                                    :key="tag" 
+                                    class="tag"
+                                >
+                                    #{{ tag }}
+                                </span>
+                            </div>
+                            <span class="memo-date">{{ formatDate(memo.createdAt) }}</span>
+                        </div>
+                        <button 
+                            @click.stop="deleteMemo(memo.id)"
+                            class="delete-btn"
+                            title="削除"
+                        >
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    
+                    <div v-if="filteredMemos.length === 0" class="empty-state">
+                        <i class="fas fa-folder-open empty-icon"></i>
+                        <p>メモが見つかりません</p>
+                    </div>
+                </div>
+
+                <!-- メモ追加ビュー -->
+                <div v-if="currentView === 'add'" class="add-form">
+                    <div class="form-card">
+                        <h2 class="form-title">
+                            <i class="fas fa-plus-circle"></i>
+                            新しいメモを追加
+                        </h2>
+                        <form @submit.prevent="addMemo">
+                            <div class="form-group">
+                                <label class="form-label">タイトル</label>
+                                <input 
+                                    type="text" 
+                                    v-model="newMemo.title" 
+                                    required 
+                                    class="form-input"
+                                    placeholder="メモのタイトルを入力..."
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">内容</label>
+                                <textarea 
+                                    v-model="newMemo.content" 
+                                    required 
+                                    class="form-textarea"
+                                    placeholder="メモの内容を入力..."
+                                    rows="6"
+                                ></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">カテゴリ</label>
+                                <select v-model="newMemo.category" required class="form-select">
+                                    <option value="">カテゴリを選択</option>
+                                    <option 
+                                        v-for="category in categories" 
+                                        :key="category.id" 
+                                        :value="category.id"
+                                    >
+                                        {{ category.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">タグ（カンマ区切り）</label>
+                                <input 
+                                    type="text" 
+                                    v-model="newMemo.tagsString" 
+                                    class="form-input"
+                                    placeholder="タグ1, タグ2, タグ3..."
+                                >
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">画像</label>
+                                <input 
+                                    type="file" 
+                                    @change="handleImageUpload" 
+                                    accept="image/*"
+                                    class="form-file"
+                                    ref="fileInput"
+                                >
+                                <div v-if="newMemo.image" class="image-preview">
+                                    <img :src="newMemo.image" alt="プレビュー" class="preview-image">
+                                    <button type="button" @click="removeImage" class="remove-image-btn">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn">
+                                    <i class="fas fa-save"></i>
+                                    保存
+                                </button>
+                                <button type="button" @click="resetForm" class="reset-btn">
+                                    <i class="fas fa-undo"></i>
+                                    リセット
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- カテゴリビュー -->
+                <div v-if="currentView === 'categories'" class="categories-view">
+                    <h2 class="section-title">
+                        <i class="fas fa-tags"></i>
+                        カテゴリ別表示
+                    </h2>
+                    <div 
+                        v-for="category in categories" 
+                        :key="category.id" 
+                        class="category-section"
+                    >
+                        <h3 class="category-title" :style="{ borderLeftColor: category.color }">
+                            <span class="category-name">{{ category.name }}</span>
+                            <span class="memo-count">{{ getMemosByCategory(category.id).length }}件</span>
+                        </h3>
+                        <div class="category-memos">
+                            <div 
+                                v-for="memo in getMemosByCategory(category.id)" 
+                                :key="memo.id" 
+                                class="category-memo-card"
+                                @click="selectedMemo = memo"
+                            >
+                                <div class="memo-info">
+                                    <h4 class="memo-title">{{ memo.title }}</h4>
+                                    <p class="memo-preview">{{ memo.content.substring(0, 80) }}{{ memo.content.length > 80 ? '...' : '' }}</p>
+                                    <span class="memo-date">{{ formatDate(memo.createdAt) }}</span>
+                                </div>
+                                <div v-if="memo.image" class="memo-thumbnail">
+                                    <img :src="memo.image" alt="thumbnail" class="thumb-img">
+                                </div>
+                            </div>
+                            <div v-if="getMemosByCategory(category.id).length === 0" class="empty-category">
+                                <i class="fas fa-folder-open"></i>
+                                <span>このカテゴリにはメモがありません</span>
+                            </div>
                         </div>
                     </div>
-                </transition-group>
-
-                <!-- メモがない場合の表示 -->
-                <div v-if="filteredMemos.length === 0" class="text-center py-12">
-                    <p class="text-gray-500">表示できるメモがありません。</p>
                 </div>
-            </section>
+            </div>
         </main>
+
+        <!-- メモ詳細モーダル -->
+        <div v-if="selectedMemo" class="modal-overlay" @click="selectedMemo = null">
+            <div class="modal-content" @click.stop>
+                <div class="modal-header">
+                    <h2 class="modal-title">{{ selectedMemo.title }}</h2>
+                    <button @click="selectedMemo = null" class="modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="memo-details">
+                        <div class="memo-meta">
+                            <span 
+                                class="category-badge" 
+                                :style="{ backgroundColor: getCategoryColor(selectedMemo.category) }"
+                            >
+                                {{ getCategoryName(selectedMemo.category) }}
+                            </span>
+                            <span class="memo-date">{{ formatDate(selectedMemo.createdAt) }}</span>
+                        </div>
+                        <div class="memo-full-content">
+                            <p>{{ selectedMemo.content }}</p>
+                        </div>
+                        <div v-if="selectedMemo.image" class="memo-full-image">
+                            <img :src="selectedMemo.image" alt="メモ画像" class="full-image">
+                        </div>
+                        <div v-if="selectedMemo.tags && selectedMemo.tags.length > 0" class="memo-tags">
+                            <span 
+                                v-for="tag in selectedMemo.tags" 
+                                :key="tag" 
+                                class="tag-detail"
+                            >
+                                #{{ tag }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 通知 -->
+        <div v-if="notification" class="notification" :class="notification.type">
+            <i :class="notification.icon"></i>
+            <span>{{ notification.message }}</span>
+        </div>
     </div>
 
-    <!-- Vue.js本体をCDN経由で読み込み -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- アプリケーションのロジックを記述したJSファイルを読み込み -->
-    <script src="js/main.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
