@@ -5,7 +5,12 @@ createApp({
         return {
             currentView: 'list',
             memos: [],
-            categories: [],
+            categories: [
+                { id: 'work', name: '仕事', color: '#3b82f6' },
+                { id: 'personal', name: 'プライベート', color: '#10b981' },
+                { id: 'study', name: '勉強', color: '#f59e0b' },
+                { id: 'other', name: 'その他', color: '#6b7280' }
+            ],
             filteredMemos: [],
             searchQuery: '',
             selectedCategory: '',
@@ -17,27 +22,46 @@ createApp({
                 category: '',
                 image: null,
                 tagsString: ''
+            },
+            // LocalStorageキー（Netlifyでは使えないので、メモリストレージとして使用）
+            memoryStorage: {
+                memos: [
+                    {
+                        id: 1,
+                        title: "サンプルメモ",
+                        content: "これはサンプルのメモです。Netlify環境でも動作します！",
+                        category: "work",
+                        image: null,
+                        createdAt: new Date().toISOString(),
+                        tags: ["サンプル", "テスト", "Netlify"]
+                    },
+                    {
+                        id: 2,
+                        title: "写真付きメモ",
+                        content: "写真を添付したメモの例です。画像も正常に表示されます。",
+                        category: "personal",
+                        image: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzRmYjNkOSIvPgogIDx0ZXh0IHg9IjEwMCIgeT0iNTUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5ldGxpZnkgU2FtcGxlPC90ZXh0Pgo8L3N2Zz4=",
+                        createdAt: new Date(Date.now() - 86400000).toISOString(), // 1日前
+                        tags: ["写真", "サンプル", "デモ"]
+                    }
+                ]
             }
         };
     },
     
-    async mounted() {
-        await this.loadData();
+    mounted() {
+        this.loadData();
         this.filteredMemos = this.memos;
     },
     
     methods: {
-        // データの読み込み
-        async loadData() {
+        // データの読み込み（メモリストレージから）
+        loadData() {
             try {
-                const [memosResponse, categoriesResponse] = await Promise.all([
-                    fetch('http://localhost:3000/memos'),
-                    fetch('http://localhost:3000/categories')
-                ]);
-                
-                this.memos = await memosResponse.json();
-                this.categories = await categoriesResponse.json();
+                // Netlify環境では、メモリストレージからデータを読み込み
+                this.memos = [...this.memoryStorage.memos];
                 this.filteredMemos = this.memos;
+                this.showNotification('データを読み込みました (Netlify版)', 'success');
             } catch (error) {
                 console.error('データの読み込みに失敗しました:', error);
                 this.showNotification('データの読み込みに失敗しました', 'error');
@@ -66,8 +90,8 @@ createApp({
             this.filteredMemos = filtered;
         },
         
-        // メモ追加
-        async addMemo() {
+        // メモ追加（メモリストレージに保存）
+        addMemo() {
             if (!this.newMemo.title.trim() || !this.newMemo.content.trim() || !this.newMemo.category) {
                 this.showNotification('必須項目を入力してください', 'error');
                 return;
@@ -79,7 +103,8 @@ createApp({
                     .map(tag => tag.trim())
                     .filter(tag => tag.length > 0);
                 
-                const memoData = {
+                const newMemo = {
+                    id: Date.now(), // 簡単なID生成
                     title: this.newMemo.title,
                     content: this.newMemo.content,
                     category: this.newMemo.category,
@@ -88,48 +113,32 @@ createApp({
                     createdAt: new Date().toISOString()
                 };
                 
-                const response = await fetch('http://localhost:3000/memos', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(memoData)
-                });
+                // メモリストレージに追加
+                this.memos.unshift(newMemo);
+                this.memoryStorage.memos.unshift(newMemo);
                 
-                if (response.ok) {
-                    const newMemo = await response.json();
-                    this.memos.unshift(newMemo);
-                    this.searchMemos();
-                    this.resetForm();
-                    this.currentView = 'list';
-                    this.showNotification('メモを追加しました', 'success');
-                } else {
-                    throw new Error('メモの追加に失敗しました');
-                }
+                this.searchMemos();
+                this.resetForm();
+                this.currentView = 'list';
+                this.showNotification('メモを追加しました', 'success');
+                
             } catch (error) {
                 console.error('メモ追加エラー:', error);
                 this.showNotification('メモの追加に失敗しました', 'error');
             }
         },
         
-        // メモ削除
-        async deleteMemo(id) {
+        // メモ削除（メモリストレージから削除）
+        deleteMemo(id) {
             if (!confirm('このメモを削除しますか？')) {
                 return;
             }
             
             try {
-                const response = await fetch(`http://localhost:3000/memos/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    this.memos = this.memos.filter(memo => memo.id !== id);
-                    this.searchMemos();
-                    this.showNotification('メモを削除しました', 'success');
-                } else {
-                    throw new Error('メモの削除に失敗しました');
-                }
+                this.memos = this.memos.filter(memo => memo.id !== id);
+                this.memoryStorage.memos = this.memoryStorage.memos.filter(memo => memo.id !== id);
+                this.searchMemos();
+                this.showNotification('メモを削除しました', 'success');
             } catch (error) {
                 console.error('メモ削除エラー:', error);
                 this.showNotification('メモの削除に失敗しました', 'error');
